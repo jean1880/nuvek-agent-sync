@@ -1,0 +1,39 @@
+# THE translation table between the neutral sources and each tool. Edit here; nothing is
+# hard-coded in agent-sync.
+
+# Public env names whose ${NAME} references are expanded when rendering, so addresses stay out of git.
+# ONLY these are expanded. A secret reference such as ${MY_API_TOKEN} is always left verbatim.
+# A listed name must be set in the environment whenever a source references it, or rendering fails.
+# PROJECTS_DIR is used by the filesystem server in mcp.toml.example. customise: add your own names.
+placeholders = ["PROJECTS_DIR"]
+
+[tiers.claude]
+fast = "haiku"
+standard = "sonnet"
+deep = "opus"
+
+[tiers.agy]
+fast = "flash"
+standard = "pro"
+deep = "pro"
+
+[tools.claude]
+shell = "Bash"
+read = "Read"
+grep = "Grep"
+glob = "Glob"
+edit = "Edit"
+write = "Write"
+
+[tools.agy]
+shell = "run_command"
+read = "view_file"
+grep = "run_command"
+glob = "run_command"
+edit = "replace_file_content"
+write = "write_to_file"
+
+# Documentation only: surfaces deliberately NOT projected to the other tool.
+[not_projected]
+claude = []
+agy = []

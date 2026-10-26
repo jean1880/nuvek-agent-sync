@@ -1,0 +1,58 @@
+# Neutral permissions, rendered to Claude settings.json and AGY settings.json by agent-sync.
+# agent-sync requires this file to exist. The default below is read-only: it allows inspecting files
+# and git history, the agent-sync checks and shellcheck, and denies the commands that dump the
+# environment. See permissions.toml.example for a fuller set.
+# shell = Bash(X:*) / command(X) · shell_glob = Bash(X*) / command(X) · shell_exact = Bash(X) / command(X)
+# read = Read(//abs) / read_file(/abs) · mcp = mcp__s__t / mcp(s/t) · claude/agy = raw, one tool only
+
+[allow]
+shell = [
+    "agent-sync check",
+    "agent-sync status",
+    "shellcheck",
+    "ls",
+    "cat",
+    "head",
+    "tail",
+    "grep",
+]
+# Only the read-only git subcommands. A bare `git` or `git -C` prefix would also allow push, reset
+# and clean. `find` is left out because `-exec` and `-delete` make it a write command.
+shell_glob = [
+    "git status",
+    "git log",
+    "git diff",
+    "git show",
+    "git -C * status",
+    "git -C * log",
+    "git -C * diff",
+    "git -C * show",
+]
+
+# OPT-IN: build and test grants. They are NOT read-only: `cargo check`, `clippy` and `test` compile
+# and run the repository's own code (build scripts, proc macros, tests), so enabling them lets any
+# repository the agent opens execute code without a prompt. Uncomment only for repositories you trust.
+# [allow] shell entries to add:
+#     "cargo fmt --check",
+#     "cargo clippy",
+#     "cargo test",
+#     "cargo check",
+
+[deny]
+shell_glob = [
+    "*--no-verify",
+    "printenv",
+    "export -p",
+]
+shell_exact = [
+    "env",
+    "set",
+]
+# `read` entries must be absolute paths (rendered as Read(//abs) and read_file(/abs)); `~` and
+# $HOME are not expanded there. Claude accepts `~` in a raw entry, so the secret-file denials
+# below use the claude list. customise: add absolute read denials for AGY under `read`.
+claude = [
+    "Read(~/.ssh/**)",
+    "Read(~/**/*.pem)",
+    "Read(~/**/*.key)",
+]

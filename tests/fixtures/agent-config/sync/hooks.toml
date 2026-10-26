@@ -1,0 +1,3 @@
+# Hooks for Claude, AGY and Codex. agent-sync requires this file to exist; it ships empty.
+# See hooks.toml.example for a worked entry. A missing tool-specific side means the hook is not
+# projected to that tool. timeout is in SECONDS for all tools.

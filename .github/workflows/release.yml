@@ -1,0 +1,110 @@
+name: Release
+
+# A v* tag builds a static musl x86_64 binary and a Debian package, and publishes them with
+# SHA256SUMS and the notes from docs/releases/<tag>.md as a GitHub Release. Publishing runs only
+# when the repository variable PUBLISH is 'true'; otherwise the build is a dry run whose files
+# stay as workflow artifacts. Run by hand (workflow_dispatch), it is always a dry run.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  version:
+    name: Version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Read the version, and check the tag matches it
+        id: read
+        run: |
+          version="$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -n 1)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Cargo.toml version: $version"
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            tag="${GITHUB_REF#refs/tags/}"
+            if [[ "$tag" != "v$version" ]]; then
+              echo "::error::Tag $tag does not match Cargo.toml version $version (expected v$version)"
+              exit 1
+            fi
+            notes="docs/releases/$tag.md"
+            if [[ ! -s "$notes" ]]; then
+              echo "::error::Missing release notes: $notes"
+              exit 1
+            fi
+          fi
+
+  build:
+    name: Build (x86_64 musl)
+    needs: version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the musl target and tools
+        run: |
+          rustup target add x86_64-unknown-linux-musl
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends musl-tools
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: cargo-deb
+      - name: Test
+        run: cargo test --locked
+      - name: Build the static binary
+        run: cargo build --locked --release --target x86_64-unknown-linux-musl
+      - name: Package
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          mkdir -p dist
+          bin=target/x86_64-unknown-linux-musl/release/agent-sync
+          file "$bin"
+          "$bin" --version
+          cp "$bin" "dist/agent-sync-$VERSION-x86_64-unknown-linux-musl"
+          cargo deb --no-build --target x86_64-unknown-linux-musl --output dist/
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Publish
+    if: startsWith(github.ref, 'refs/tags/v') && vars.PUBLISH == 'true'
+    needs: [version, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist
+      - name: Checksums
+        working-directory: dist
+        run: |
+          sha256sum -- * > SHA256SUMS
+          cat SHA256SUMS
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          gh release create "$TAG" dist/* \
+            --verify-tag \
+            --title "nuvek-agent-sync $VERSION" \
+            --notes-file "docs/releases/$TAG.md"

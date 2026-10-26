@@ -1,0 +1,105 @@
+# A fuller permissions example. Copy what you need into permissions.toml.
+# shell = Bash(X:*) / command(X) · shell_glob = Bash(X*) / command(X) · shell_exact = Bash(X) / command(X)
+# read = Read(//abs) / read_file(/abs) · mcp = mcp__s__t / mcp(s/t) · claude/agy = raw, one tool only
+# Reference a CLI exactly as the permission matcher will see it: it compares the command string
+# literally and never expands `~`.
+
+[allow]
+shell = [
+    "agent-sync check",
+    "agent-sync status",
+    "agent-sync promote --list",
+    "cross-agent",
+    "gitleaks detect",
+    "gitleaks git",
+    "gitleaks dir",
+    "shellcheck",
+    "shellcheck -x",
+    # The cargo grants below compile and run the repository's own code (build scripts, proc macros,
+    # tests). Keep them only for repositories you trust.
+    "cargo fmt",
+    "cargo clippy",
+    "cargo test",
+    "cargo build",
+    "cargo check",
+    "cargo doc",
+    "cargo tree",
+    "gh",
+    "jq",
+    "rg",
+    "fd",
+]
+shell_glob = [
+    # Read-only git subcommands only: a bare `git` or `git -C` prefix also allows push, reset and clean.
+    "git status",
+    "git diff",
+    "git log",
+    "git show",
+    "git branch",
+    "git -C * status",
+    "git -C * log",
+    "git -C * diff",
+    "git -C * show",
+    "ls",
+    "cat",
+    "head",
+    "tail",
+    "grep",
+    # `find` is omitted on purpose: `-exec` and `-delete` make it a write command.
+    "wc",
+    "sort",
+    "journalctl",
+]
+shell_exact = [
+    "cargo --version",
+    "rustc --version",
+]
+read = [
+    "/etc/**",
+    "/tmp/**",
+    "/usr/share/**",
+]
+# MCP tools: server/tool, or a bare server name for all of its tools.
+mcp = [
+    "hive-board/board_list_topics",
+    "hive-board/board_get_messages",
+    "hive-board/board_post_message",
+    "playwright/browser_navigate",
+    "playwright/browser_snapshot",
+]
+# Raw entries for one tool only.
+claude = [
+    "WebSearch",
+    "WebFetch(domain:docs.claude.com)",
+]
+agy = [
+    "read_url(docs.claude.com)",
+]
+
+[deny]
+shell_glob = [
+    "*--no-verify",
+    "printenv",
+    "export -p",
+    "declare -p",
+    "typeset -p",
+    "compgen -e",
+]
+shell_exact = [
+    "env",
+    "/usr/bin/env",
+    "set",
+]
+# Absolute paths only for `read` (rendered as Read(//abs) and read_file(/abs)).
+# customise: replace <HOME> with the absolute path of your home directory.
+read = [
+    "<HOME>/.ssh/**",
+    "<HOME>/.aws/**",
+]
+# Claude also accepts `~` in a raw entry.
+claude = [
+    "Read(~/**/*.key)",
+    "Read(~/**/*.pem)",
+    "Read(~/**/*.p12)",
+    "Read(~/**/*.pfx)",
+]

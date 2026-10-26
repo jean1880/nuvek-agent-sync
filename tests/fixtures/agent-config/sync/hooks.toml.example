@@ -1,0 +1,33 @@
+# Example hooks. Copy entries into hooks.toml, then run `agent-sync apply`.
+# timeout is in SECONDS for every tool (a value over 120 is rejected as a milliseconds slip,
+# unless the side sets `interactive = true`, which allows up to 900).
+# A hook with no table for a tool is not projected to that tool.
+
+# A guard that runs before shell and file tools. Replace the command with your own script.
+[[hook]]
+name = "pretooluse-guard"
+event = "PreToolUse"
+command = "bash $HOME/bin/pretooluse-guard.sh"
+
+[hook.claude]
+matcher = "Bash|Read|Edit|Write"
+timeout = 10
+
+# AGY names its tools differently, so it gets its own matcher.
+[hook.agy]
+matcher = "run_command|view_file|write_to_file|replace_file_content"
+timeout = 10
+
+# Context injected at session start. Claude and Codex take a startup matcher.
+[[hook]]
+name = "session-context"
+event = "SessionStart"
+command = "bash $HOME/bin/session-context.sh"
+
+[hook.claude]
+matcher = "startup|resume|clear"
+timeout = 15
+
+[hook.codex]
+matcher = "startup|resume|clear|compact"
+timeout = 30
