@@ -1,0 +1,4 @@
+# MCP servers (agents = which tools get each). agent-sync requires this file to exist; it ships
+# with no servers. Copy entries from mcp.toml.example to enable them.
+# No secret values here: reference them as $VAR inside a `bash -c` wrapper.
+# Pin npx packages to an exact version so an upstream release cannot change a server overnight.

@@ -1,0 +1,7 @@
+{
+  "name": "nuvek-skills",
+  "description": "Generic engineering skills for coding agents: delegation, Rust, polyglot standards, security review, Git workflow, releases and skill authoring",
+  "author": {
+    "name": "Jean-Luc Desroches"
+  }
+}

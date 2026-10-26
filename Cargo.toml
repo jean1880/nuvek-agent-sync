@@ -1,0 +1,66 @@
+[workspace]
+resolver = "2"
+members = ["."]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.90"
+license = "MIT"
+repository = "https://github.com/jean1880/nuvek-agent-sync"
+
+[workspace.dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive", "env"] }
+serde = { version = "1", features = ["derive"] }
+# preserve_order: a rewritten JSON document diffs only where it changed.
+serde_json = { version = "1", features = ["preserve_order"] }
+serde_yaml = "0.9"
+toml = "0.8"
+toml_edit = "0.22"
+# The features agent-sync uses: scrub and log are nuvek-core's defaults.
+nuvek-core = { version = "1", default-features = false, features = ["scrub", "log", "metrics", "git", "tracing"] }
+
+[package]
+name = "nuvek-agent-sync"
+version = "1.0.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+readme = "README.md"
+description = "Render one authored agent-config source into Claude Code, Antigravity and Codex, and gate drift."
+keywords = ["claude", "codex", "agents", "config", "sync"]
+categories = ["command-line-utilities", "development-tools"]
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+toml.workspace = true
+toml_edit.workspace = true
+nuvek-core.workspace = true
+
+[[bin]]
+name = "agent-sync"
+path = "src/main.rs"
+
+[package.metadata.deb]
+name = "nuvek-agent-sync"
+maintainer = "Jean-Luc Desroches"
+copyright = "2026, Jean-Luc Desroches"
+license-file = ["LICENSE", "0"]
+extended-description = """\
+agent-sync renders one authored source of agent instructions (rules, skills, agents, MCP \
+servers, permissions and hooks) into Claude Code, Antigravity and Codex, and its check \
+command exits 6 when any of them has drifted from the source."""
+# The release binary is static (musl), so it needs no shared libraries.
+depends = ""
+section = "utils"
+priority = "optional"
+assets = [
+    ["target/release/agent-sync", "usr/bin/", "755"],
+    ["README.md", "usr/share/doc/nuvek-agent-sync/README.md", "644"],
+]

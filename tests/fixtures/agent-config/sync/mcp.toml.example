@@ -1,0 +1,55 @@
+# Example MCP servers. Copy the entries you want into mcp.toml, then run `agent-sync apply`.
+# No secret values: reference them as $VAR inside the bash -c wrapper. Pin npx packages to an
+# exact version.
+
+# hive-board (https://github.com/jean1880/nuvek-hive-board): the shared board for typed findings and jobs.
+# Needs the `hive-mcp` binary on PATH and its connection settings in your environment file.
+[servers.hive-board]
+type = "stdio"
+command = "bash"
+args = [
+    "-c",
+    "source $HOME/.agent_env && exec hive-mcp",
+]
+agents = [
+    "claude",
+    "agy",
+    "codex",
+]
+
+# Browser automation. The package version is pinned; bump it deliberately.
+[servers.playwright]
+command = "npx"
+args = [
+    "-y",
+    "@playwright/mcp@0.0.83",
+]
+agents = [
+    "claude",
+    "agy",
+    "codex",
+]
+
+# Filesystem access limited to one directory. agent-sync expands only the ${NAME} placeholders
+# listed in sync/map.toml `placeholders` (PROJECTS_DIR is registered there), and it fails if the
+# variable is unset. Export an ABSOLUTE path before check or apply, for example:
+#   export PROJECTS_DIR="$HOME/projects"
+# The server receives the expanded absolute path, not the placeholder.
+[servers.filesystem]
+type = "stdio"
+command = "npx"
+args = [
+    "-y",
+    "@modelcontextprotocol/server-filesystem@2025.8.21",
+    "${PROJECTS_DIR}",
+]
+agents = [
+    "claude",
+    "agy",
+    "codex",
+]
+
+# A streamable-http server takes a url and nothing else (no args, no env).
+# [servers.example-http]
+# url = "http://127.0.0.1:8080/mcp"
+# agents = ["claude", "agy"]

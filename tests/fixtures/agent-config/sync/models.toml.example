@@ -1,0 +1,51 @@
+# Model capability tags, projected by `agent-sync apply` to
+# ~/.config/agent-terminal/model-tags.json (read by Agent Terminal and `cross-agent status`).
+# Optional: without models.toml, agent-sync skips this projection. Copy to models.toml to enable it.
+# `match`: exact id, `pre*`, `*suf` or `*infix*`; case-insensitive; the FIRST matching entry wins.
+# `driver` (optional): claude | agy | codex. `tier`: fast | standard | deep.
+# Every tag must be in [vocabulary] (agent-sync rejects unknown tags).
+
+[vocabulary]
+code = "writes/refactors code"
+review = "adversarial checking of someone else's work"
+deep-reasoning = "architecture, RCA, ambiguous multi-step problems"
+bulk = "high-volume sweeps where cost per token matters"
+fast = "low latency, short tasks"
+long-context = "large repos/logs in one pass"
+research = "web/doc research and synthesis"
+vision = "reads images/screenshots"
+high-effort = "top-cost model: reserve for work that needs it"
+
+# Effort per task tier, clamped per model to the efforts it offers. Effort multiplies quota burn:
+# start at the tier's effort and escalate only after a failed attempt. `reserved` efforts are
+# never picked by clamping; use them deliberately.
+[effort]
+ladder = ["minimal", "low", "medium", "high", "xhigh", "max", "ultra"]
+fast = "low"
+standard = "medium"
+deep = "high"
+reserved = ["xhigh", "max", "ultra"]
+
+[[model]]
+match = "*opus*"
+tier = "deep"
+tags = ["code", "review", "deep-reasoning", "long-context", "vision"]
+best_for = "long-running agentic coding, design, hard bugs, final review"
+
+[[model]]
+match = "*sonnet*"
+tier = "standard"
+tags = ["code", "review", "fast", "long-context", "vision"]
+best_for = "everyday implementer: best speed/intelligence balance"
+
+[[model]]
+match = "*haiku*"
+tier = "fast"
+tags = ["fast", "bulk", "long-context", "vision"]
+best_for = "high-volume, low-latency search, extraction, routing"
+
+[[model]]
+match = "*flash*"
+tier = "fast"
+tags = ["fast", "bulk", "long-context", "vision"]
+best_for = "cheap fast long-context bulk sweeps and diagnostics"
