@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 use std::collections::BTreeMap;
 
 pub const TIERS: [&str; 3] = ["fast", "standard", "deep"];
-pub const DRIVERS: [&str; 3] = ["claude", "agy", "codex"];
+pub const DRIVERS: [&str; 4] = ["claude", "agy", "codex", "local"];
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -198,6 +198,14 @@ mod tests {
         assert_eq!(v["models"][0]["match"], "*opus*");
         assert!(v["models"][0]["driver"].is_null());
         assert_eq!(v["models"][0]["best_for"], "x");
+    }
+
+    #[test]
+    fn a_local_driver_narrows_an_entry_to_local_model_servers() {
+        let f = parse("[[model]]\nmatch = \"m:14b\"\ndriver = \"local\"\ntier = \"fast\"\ntags = [\"fast\"]\n");
+        f.validate().unwrap();
+        let v: Value = serde_json::from_str(&f.render().unwrap()).unwrap();
+        assert_eq!(v["models"][0]["driver"], "local");
     }
 
     #[test]
