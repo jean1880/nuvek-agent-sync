@@ -16,7 +16,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 serde_yaml = "0.9"
 toml = "0.8"
-toml_edit = "0.22"
+toml_edit = "0.25"
 # The features agent-sync uses: scrub and log are nuvek-core's defaults.
 nuvek-core = { version = "1", default-features = false, features = ["scrub", "log", "metrics", "git", "tracing"] }
 
